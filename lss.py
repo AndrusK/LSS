@@ -1,11 +1,10 @@
 import sys
 import requests
-import time
-from alive_progress import alive_bar
+from alive_progress import alive_bar, styles
 
-def scraper(i):
+def scraper(current_page):
     summoners = []
-    r = requests.get('https://na.op.gg/ranking/level/page='+str(i))
+    r = requests.get('https://na.op.gg/ranking/level/page='+str(current_page))
     for line in r.text.splitlines():
         if "userName=" in line:
             if not "%" in line:
@@ -14,21 +13,19 @@ def scraper(i):
     return summoners
 
 
-def scrape_range(x,y):
+def scrape_range(start,end):
     summoners = []
-    page_count = y - x
-    with alive_bar(page_count) as bar:
-        for i in range(x,y):
+    page_count = start - end
+    with alive_bar(page_count, enrich_print=False, monitor=True) as bar:
+        for i in range(start,end):
+            print(f"Currently scraping page: {i}")
             summoners.extend(scraper(i))
-            print(f"scraping page {i}")
             bar()
     return summoners
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print("lss.py [start] [end] [filename]")
-    else:
+    if len(sys.argv) >= 3:
         savefile = sys.argv[3]
         summoners = scrape_range(int(sys.argv[1]),int(sys.argv[2]))
         with open(savefile, 'w') as filehandle:
@@ -38,3 +35,5 @@ if __name__ == '__main__':
                 else:
                     filehandle.write('%s' % summoner)
         print("Done!")
+    else:
+        print("lss.py [start] [end] [filename]")
